@@ -18,7 +18,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
