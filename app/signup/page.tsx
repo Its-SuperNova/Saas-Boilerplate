@@ -18,6 +18,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import prisma from "@/lib/prisma";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -38,8 +39,16 @@ export default function SignupPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password });
       if (!error) {
+        // Create a user record in Prisma
+        await prisma.user.create({
+          data: {
+            authId: data.user.id,
+            email: data.user.email,
+            role: "USER", // or any default role
+          },
+        });
         router.push("/login");
       } else {
         setError(error.message);
