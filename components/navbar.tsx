@@ -13,25 +13,6 @@ export function Navbar() {
     await supabase.auth.signOut();
   };
 
-  if (session === null) {
-    return (
-      <nav className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
-              <div className="w-20 h-4 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
-              <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-          </div>
-        </div>
-      </nav>
-    );
-  }
-
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4">
