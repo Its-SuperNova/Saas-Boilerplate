@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function SignupPage() {
@@ -24,12 +24,14 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
+    setIsSuccess(false);
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters long");
@@ -45,14 +47,21 @@ export default function SignupPage() {
       });
 
       if (supabaseError) {
+        console.error("Supabase signup error:", supabaseError);
         setError(supabaseError.message);
         return;
       }
 
       if (!data.user) {
+        console.error("No user data returned from Supabase");
         setError("Failed to create user");
         return;
       }
+
+      console.log("Supabase user created:", {
+        id: data.user.id,
+        email: data.user.email,
+      });
 
       // Then, create the user in our database
       const response = await fetch("/api/auth/signup", {
@@ -66,23 +75,32 @@ export default function SignupPage() {
         }),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to create user");
+        console.error("Database user creation error:", responseData);
+        throw new Error(
+          responseData.message || responseData.error || "Failed to create user"
+        );
       }
 
-      // Log the created user for debugging
-      const { user } = await response.json();
-      console.log("Created user in database:", user);
+      console.log("Database user created:", responseData.user);
 
-      router.push("/login");
+      // Show success message
+      setIsSuccess(true);
+      setIsLoading(false);
+
+      // Wait for 2 seconds to show the success message
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
     } catch (err) {
+      console.error("Signup error:", err);
       setError(
         err instanceof Error
           ? err.message
           : "An error occurred. Please try again."
       );
-    } finally {
       setIsLoading(false);
     }
   };
@@ -104,6 +122,17 @@ export default function SignupPage() {
               </Alert>
             )}
 
+            {isSuccess && (
+              <Alert className="bg-green-50 border-green-200">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    Account created successfully! Redirecting to login...
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -113,7 +142,7 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isLoading || isSuccess}
               />
             </div>
 
@@ -126,16 +155,25 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isLoading || isSuccess}
                 minLength={6}
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading || isSuccess}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating account...
+                </>
+              ) : isSuccess ? (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Account Created!
                 </>
               ) : (
                 "Create Account"
