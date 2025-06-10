@@ -4,12 +4,13 @@ import type React from "react";
 
 import { useSession } from "@/lib/session";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { LayoutDashboard, Package, FolderOpen, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function AdminLayout({
   children,
@@ -19,14 +20,55 @@ export default function AdminLayout({
   const session = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (session === null) {
       router.push("/login");
+      return;
     }
+
+    // Check if user is admin
+    const checkAdmin = async () => {
+      try {
+        const response = await fetch("/api/auth/check-role");
+        if (!response.ok) {
+          setIsAdmin(false);
+          return;
+        }
+        const { role } = await response.json();
+        setIsAdmin(role === "ADMIN");
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdmin();
   }, [session, router]);
 
   if (session === null) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (isAdmin === false) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertDescription>
+            You do not have permission to access this page. Please contact an
+            administrator if you believe this is an error.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (isAdmin === null) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" />

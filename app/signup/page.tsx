@@ -71,6 +71,10 @@ export default function SignupPage() {
         throw new Error(error.message || "Failed to create user");
       }
 
+      // Log the created user for debugging
+      const { user } = await response.json();
+      console.log("Created user in database:", user);
+
       router.push("/login");
     } catch (err) {
       setError(
